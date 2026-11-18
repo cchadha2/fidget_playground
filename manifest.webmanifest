@@ -1,0 +1,17 @@
+{
+  "name": "Fidget Playground",
+  "short_name": "Fidget",
+  "description": "Haptic fidget toys: clicker, spinner, bubble wrap, dial, cube, switches and a reflex game.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17142e",
+  "theme_color": "#17142e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

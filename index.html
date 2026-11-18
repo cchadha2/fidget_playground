@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#17142e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fidget">
+<meta name="description" content="Tap, spin, pop and twist. Haptic fidget toys for your phone.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<title>Fidget Playground</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a dark tabletop holding soft-plastic toy trays; one column on phones, two from 760px. */
+:root {
+  --bg: #17142e;
+  --tray: #221e42;
+  --tray-hi: #2d2856;
+  --edge: rgba(255, 255, 255, .07);
+  --shadow: rgba(5, 3, 20, .45);
+  --text: #f4f0ff;
+  --muted: #a59fcb;
+  --tangerine: #ff7b3a;
+  --mint: #35dfb0;
+  --lilac: #a88cff;
+  --sun: #ffcf3f;
+  --rose: #ff5c8d;
+  --sky: #4cb3ff;
+  --metal-hi: #f1effa;
+  --metal-lo: #8a85a6;
+  --font-display: 'Fredoka', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+html.standalone .wrap {
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- Header ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.brand h1 {
+  margin: 0;
+  font-size: clamp(30px, 8vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.brand h1 span { color: var(--tangerine); }
+.brand p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.settings { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--tray);
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.chip::before {
+  content: "";
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--metal-lo);
+  transition: background .15s;
+}
+.chip[aria-pressed="true"] { color: var(--text); background: var(--tray-hi); }
+.chip[aria-pressed="true"]::before { background: var(--mint); box-shadow: 0 0 8px var(--mint); }
+.hmode { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+
+/* ---------- Trays ---------- */
+.toys { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 760px) {
+  .toys { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .span-2 { grid-column: span 2; }
+}
+.tray {
+  background: var(--tray);
+  border-radius: 28px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: inset 0 1px 0 var(--edge), 0 12px 30px var(--shadow);
+  min-width: 0;
+}
+.tray-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.tray h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.tray h2 small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.readout {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.readout b { color: var(--text); font-weight: 500; font-size: 18px; }
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  touch-action: none;
+  border-radius: 20px;
+}
+.seg { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.seg button {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--tray-hi); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--c, var(--tangerine)); }
+
+/* ---------- Clicker ---------- */
+.clicker {
+  --c: var(--tangerine);
+  --depth: 12px;
+  position: relative;
+  width: 176px; height: 176px;
+  border: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.45), transparent 42%), var(--c);
+  box-shadow:
+    0 var(--depth) 0 color-mix(in srgb, var(--c) 55%, #000),
+    0 calc(var(--depth) + 14px) 26px var(--shadow),
+    inset 0 -6px 12px rgba(0,0,0,.18);
+  transform: translateY(0);
+  transition: transform 40ms ease-out, box-shadow 40ms ease-out;
+  cursor: pointer;
+  touch-action: none;
+}
+.clicker::after {
+  content: "";
+  position: absolute; inset: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.18), rgba(0,0,0,.1));
+  box-shadow: inset 0 3px 8px rgba(0,0,0,.18);
+}
+.clicker.down {
+  transform: translateY(calc(var(--depth) - 2px));
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--c) 55%, #000),
+    0 6px 10px var(--shadow),
+    inset 0 -2px 8px rgba(0,0,0,.25);
+}
+.clicker-base {
+  position: absolute;
+  width: 210px; height: 210px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,0,0,.35), rgba(0,0,0,.1) 70%, transparent 71%);
+  transform: translateY(16px);
+  pointer-events: none;
+}
+
+/* ---------- Spinner ---------- */
+.spin-stage { cursor: grab; }
+.spin-stage:active { cursor: grabbing; }
+.rotor { width: 230px; height: 230px; will-change: transform; filter: drop-shadow(0 12px 18px var(--shadow)); }
+.rotor svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.spin-hint { position: absolute; bottom: 4px; font-size: 13px; color: var(--muted); pointer-events: none; transition: opacity .4s; }
+
+/* ---------- Bubble wrap ---------- */
+.bubbles {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 14px;
+  border-radius: 20px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 6px, transparent 6px 12px),
+    color-mix(in srgb, var(--sky) 18%, var(--tray));
+  touch-action: none;
+  width: 100%;
+}
+.bubble {
+  aspect-ratio: 1;
+  max-width: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 9%, rgba(255,255,255,.35) 10% 22%, transparent 40%),
+    radial-gradient(circle at 60% 70%, color-mix(in srgb, var(--sky) 60%, transparent), color-mix(in srgb, var(--sky) 25%, transparent) 70%);
+  box-shadow: inset 0 -4px 8px rgba(0,0,0,.18), inset 0 2px 3px rgba(255,255,255,.35), 0 3px 6px rgba(0,0,0,.2);
+  transition: transform .12s cubic-bezier(.3,1.6,.5,1), opacity .2s;
+  pointer-events: auto;
+}
+.bubble.popped {
+  transform: scale(.82);
+  opacity: .38;
+  background:
+    linear-gradient(115deg, transparent 44%, rgba(255,255,255,.5) 46% 50%, transparent 52%),
+    linear-gradient(30deg, transparent 40%, rgba(255,255,255,.3) 42% 45%, transparent 47%),
+    color-mix(in srgb, var(--sky) 25%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.3);
+}
+.bubble.fresh { animation: inflate .35s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes inflate { from { transform: scale(.6); opacity: .3; } to { transform: scale(1); opacity: 1; } }
+
+/* ---------- Dial ---------- */
+.dial { position: relative; width: 240px; height: 240px; }
+.dial svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dial .tickmark { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.dial .tickmark.major { stroke: rgba(255,255,255,.18); stroke-width: 4; }
+.dial .tickmark.lit { stroke: var(--lilac); }
+.knob {
+  position: absolute; inset: 42px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,.06) 0 4deg, rgba(0,0,0,.06) 4deg 8deg),
+    radial-gradient(circle at 40% 30%, #4a4380, #2a2550 70%);
+  box-shadow: 0 14px 24px var(--shadow), inset 0 2px 0 rgba(255,255,255,.12), inset 0 -4px 10px rgba(0,0,0,.35);
+  transition: transform 70ms cubic-bezier(.3,1.5,.6,1);
+}
+.knob::before {
+  content: ""; position: absolute; inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #3a3468, #221e42);
+  box-shadow: inset 0 3px 8px rgba(0,0,0,.4), 0 1px 0 rgba(255,255,255,.08);
+}
+.knob::after {
+  content: ""; position: absolute; left: 50%; top: 9px;
+  width: 8px; height: 26px; margin-left: -4px; border-radius: 4px;
+  background: var(--lilac);
+  box-shadow: 0 0 10px var(--lilac);
+}
+
+/* ---------- Slider ---------- */
+.slider-stage { min-height: 150px; padding-inline: 8px; }
+.track {
+  position: relative;
+  width: 100%;
+  height: 74px;
+  touch-action: none;
+  cursor: pointer;
+}
+.track .rail {
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 14px; margin-top: -7px; border-radius: 7px;
+  background: rgba(0,0,0,.3);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.4);
+}
+.track .fill {
+  position: absolute; left: 0; top: 50%;
+  height: 14px; margin-top: -7px; border-radius: 7px;
+  background: linear-gradient(90deg, var(--mint), var(--sky));
+  width: 0;
+  transition: width 60ms ease-out;
+}
+.track .notches { position: absolute; inset: 0; pointer-events: none; }
+.track .notch {
+  position: absolute; bottom: 2px; width: 3px; height: 10px; margin-left: -1.5px; border-radius: 2px;
+  background: rgba(255,255,255,.15);
+}
+.track .notch.lit { background: var(--mint); }
+.track .thumb {
+  position: absolute; top: 50%; left: 0;
+  width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--metal-hi), var(--metal-lo));
+  box-shadow: 0 6px 12px var(--shadow), inset 0 -3px 6px rgba(0,0,0,.25);
+  transition: left 60ms ease-out, transform .1s;
+}
+.track.active .thumb { transform: scale(1.12); }
+.note-name { font-family: var(--font-mono); font-size: 13px; color: var(--muted); text-align: center; }
+
+/* ---------- Switches ---------- */
+.switch-stage { min-height: 200px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+.switches { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.sw {
+  --c: var(--mint);
+  position: relative;
+  width: 58px; height: 104px;
+  border: 0; border-radius: 30px;
+  background: rgba(0,0,0,.32);
+  box-shadow: inset 0 3px 8px rgba(0,0,0,.45), 0 1px 0 var(--edge);
+  cursor: pointer;
+  transition: background .18s;
+}
+.sw .nub {
+  position: absolute; left: 6px; right: 6px; height: 46px; bottom: 6px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 35% 30%, var(--metal-hi), var(--metal-lo));
+  box-shadow: 0 4px 8px var(--shadow), inset 0 -3px 5px rgba(0,0,0,.2);
+  transition: bottom .16s cubic-bezier(.3,1.5,.6,1);
+}
+.sw[aria-checked="true"] { background: color-mix(in srgb, var(--c) 70%, #000); }
+.sw[aria-checked="true"] .nub { bottom: 52px; }
+.leds { display: flex; justify-content: center; gap: 14px; }
+.led {
+  --c: var(--mint);
+  width: 58px; height: 10px; border-radius: 5px;
+  background: rgba(0,0,0,.35);
+  transition: background .15s, box-shadow .15s;
+}
+.led.on { background: var(--c); box-shadow: 0 0 14px var(--c); }
+.leds.party .led { animation: party .5s ease-in-out 3; }
+@keyframes party { 50% { filter: brightness(1.8); transform: scaleY(1.6); } }
+
+/* ---------- Cube ---------- */
+.cube-stage { perspective: 800px; cursor: grab; }
+.cube-tilt { width: 140px; height: 140px; transform-style: preserve-3d; transform: rotateX(-22deg) rotateY(-30deg); }
+.cube { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; }
+.face {
+  position: absolute; inset: 0;
+  border-radius: 24px;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 55%), var(--c);
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,.12), inset 0 -10px 20px rgba(0,0,0,.15);
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 20px;
+  gap: 6px;
+}
+.face i { border-radius: 50%; visibility: hidden; background: rgba(20, 14, 50, .78); box-shadow: inset 0 3px 4px rgba(0,0,0,.4); }
+.face i.on { visibility: visible; }
+.f1 { --c: var(--sun);       transform: translateZ(70px); }
+.f6 { --c: var(--lilac);     transform: rotateY(180deg) translateZ(70px); }
+.f3 { --c: var(--mint);      transform: rotateY(90deg) translateZ(70px); }
+.f4 { --c: var(--rose);      transform: rotateY(-90deg) translateZ(70px); }
+.f2 { --c: var(--sky);       transform: rotateX(90deg) translateZ(70px); }
+.f5 { --c: var(--tangerine); transform: rotateX(-90deg) translateZ(70px); }
+.cube-shadow {
+  position: absolute; bottom: 18px; width: 150px; height: 26px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--shadow), transparent);
+  pointer-events: none;
+}
+
+/* ---------- Reflex ---------- */
+.reflex { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 760px) { .reflex { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: stretch; } }
+.pad {
+  --c: var(--tray-hi);
+  position: relative;
+  min-height: 300px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c) 40%, var(--tray-hi)), var(--tray-hi) 75%);
+  box-shadow: inset 0 0 0 2px var(--edge), inset 0 -10px 30px rgba(0,0,0,.2);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  touch-action: none;
+  overflow: hidden;
+  transition: background .2s;
+}
+.pad.flash { animation: flash .25s ease-out; }
+@keyframes flash { from { box-shadow: inset 0 0 0 6px var(--c), inset 0 -10px 30px rgba(0,0,0,.2); } }
+.pad.fail { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.cmd { pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; }
+.cmd .glyph { font-size: 64px; line-height: 1; font-weight: 700; color: var(--c); }
+.cmd .word { font-size: clamp(30px, 8vw, 42px); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.cmd .sub { color: var(--muted); font-size: 15px; max-width: 30ch; }
+.timebar { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: rgba(0,0,0,.25); }
+.timebar span { display: block; height: 100%; width: 100%; background: var(--c); transform-origin: left; }
+.reflex-side { display: flex; flex-direction: column; gap: 12px; justify-content: space-between; }
+.scoreboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.score { background: rgba(0,0,0,.22); border-radius: 18px; padding: 12px 14px; }
+.score span { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.score b { font-family: var(--font-mono); font-size: 34px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.moves { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.moves li { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.22); color: var(--muted); }
+.big-btn {
+  border: 0; border-radius: 18px; padding: 16px;
+  font-size: 20px; font-weight: 600;
+  background: var(--sun); color: #2a1d00;
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--sun) 55%, #000);
+  cursor: pointer;
+  transition: transform 50ms, box-shadow 50ms;
+}
+.big-btn:active { transform: translateY(5px); box-shadow: 0 1px 0 color-mix(in srgb, var(--sun) 55%, #000); }
+
+/* ---------- Footer ---------- */
+.notes { color: var(--muted); font-size: 14px; max-width: 68ch; display: flex; flex-direction: column; gap: 6px; }
+.notes p { margin: 0; }
+.notes b { color: var(--text); font-weight: 500; }
+
+/* Hidden iOS haptic switch */
+.hx { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pad.fail, .leds.party .led, .bubble.fresh { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Fidget <span>Playground</span></h1>
+      <p>Tap, spin, pop, twist. Turn your sound on.</p>
+    </div>
+    <div class="settings">
+      <button class="chip" id="soundToggle" aria-pressed="true">Sound</button>
+      <button class="chip" id="hapticToggle" aria-pressed="true">Haptics</button>
+      <span class="hmode" id="hmode"></span>
+    </div>
+  </header>
+
+  <main class="toys">
+
+    <!-- Reflex game -->
+    <section class="tray span-2" aria-labelledby="reflexTitle">
+      <div class="tray-head">
+        <h2 id="reflexTitle">Reflex<small>Do what it says before the bar runs out.</small></h2>
+        <div class="seg"><button id="voiceToggle" aria-pressed="true" style="--c: var(--sun)">Voice</button></div>
+      </div>
+      <div class="reflex">
+        <div class="pad" id="pad">
+          <div class="cmd" id="cmd">
+            <div class="glyph" id="cmdGlyph">●</div>
+            <div class="word" id="cmdWord">Ready?</div>
+            <div class="sub" id="cmdSub">Press Start, then tap, swipe, hold or spin on this pad.</div>
+          </div>
+          <div class="timebar"><span id="timebar"></span></div>
+        </div>
+        <div class="reflex-side">
+          <div class="scoreboard">
+            <div class="score"><span>Score</span><b id="score">0</b></div>
+            <div class="score"><span>Best</span><b id="best">0</b></div>
+          </div>
+          <ul class="moves" aria-label="Moves">
+            <li>Tap</li><li>Double tap</li><li>Hold</li><li>Swipe ↑ ↓ ← →</li><li>Spin (draw a circle)</li>
+          </ul>
+          <button class="big-btn" id="startBtn">Start</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clicker -->
+    <section class="tray" aria-labelledby="clickTitle">
+      <div class="tray-head">
+        <h2 id="clickTitle">Clicker<small>One very good button.</small></h2>
+        <div class="readout"><b id="clickCount">0</b><br>presses</div>
+      </div>
+      <div class="stage">
+        <div class="clicker-base"></div>
+        <button class="clicker" id="clicker" aria-label="Click"></button>
+      </div>
+      <div class="seg" id="keyTypes" role="group" aria-label="Switch type">
+        <button data-type="clicky" aria-pressed="true" style="--c: var(--sky)">Clicky</button>
+        <button data-type="tactile" aria-pressed="false" style="--c: var(--tangerine)">Tactile</button>
+        <button data-type="thocky" aria-pressed="false" style="--c: var(--lilac)">Thocky</button>
+      </div>
+    </section>
+
+    <!-- Spinner -->
+    <section class="tray" aria-labelledby="spinTitle">
+      <div class="tray-head">
+        <h2 id="spinTitle">Spinner<small>Flick it. Tap to catch.</small></h2>
+        <div class="readout"><b id="rpm">0</b> rpm<br>best <span id="bestRpm">0</span></div>
+      </div>
+      <div class="stage spin-stage" id="spinStage">
+        <div class="rotor" id="rotor">
+          <svg viewBox="-110 -110 220 220" aria-hidden="true">
+            <defs>
+              <radialGradient id="metal" cx="35%" cy="30%" r="75%">
+                <stop offset="0" stop-color="#f6f4ff"/>
+                <stop offset=".6" stop-color="#b3aecb"/>
+                <stop offset="1" stop-color="#6e6990"/>
+              </radialGradient>
+              <radialGradient id="body" cx="40%" cy="30%" r="80%">
+                <stop offset="0" stop-color="#ff9ab8"/>
+                <stop offset="1" stop-color="#e2386c"/>
+              </radialGradient>
+            </defs>
+            <g fill="url(#body)" stroke="url(#body)" stroke-width="56" stroke-linejoin="round">
+              <polygon points="0,-66 57.2,33 -57.2,33"/>
+            </g>
+            <g fill="url(#body)">
+              <circle cx="0" cy="-66" r="38"/>
+              <circle cx="57.2" cy="33" r="38"/>
+              <circle cx="-57.2" cy="33" r="38"/>
+            </g>
+            <g>
+              <circle cx="0" cy="-66" r="25" fill="url(#metal)"/>
+              <circle cx="57.2" cy="33" r="25" fill="url(#metal)"/>
+              <circle cx="-57.2" cy="33" r="25" fill="url(#metal)"/>
+              <circle cx="0" cy="-66" r="9" fill="#5a557a"/>
+              <circle cx="57.2" cy="33" r="9" fill="#5a557a"/>
+              <circle cx="-57.2" cy="33" r="9" fill="#5a557a"/>
+            </g>
+            <circle cx="0" cy="0" r="30" fill="url(#metal)"/>
+            <circle cx="0" cy="0" r="18" fill="#ffcf3f"/>
+            <circle cx="-5" cy="-6" r="5" fill="#fff6cc"/>
+          </svg>
+        </div>
+        <div class="spin-hint" id="spinHint">Drag in a circle and let go</div>
+      </div>
+    </section>
+
+    <!-- Bubble wrap -->
+    <section class="tray" aria-labelledby="bubbleTitle">
+      <div class="tray-head">
+        <h2 id="bubbleTitle">Bubble Wrap<small>Tap or drag across to pop.</small></h2>
+        <div class="readout"><b id="popCount">0</b> popped<br><span id="sheetCount">0</span> sheets</div>
+      </div>
+      <div class="stage" style="min-height: 0">
+        <div class="bubbles" id="bubbles"></div>
+      </div>
+    </section>
+
+    <!-- Dial -->
+    <section class="tray" aria-labelledby="dialTitle">
+      <div class="tray-head">
+        <h2 id="dialTitle">Detent Dial<small>30 clicks, hard stops at each end.</small></h2>
+        <div class="readout"><b id="dialVal">0</b> / 30</div>
+      </div>
+      <div class="stage" id="dialStage">
+        <div class="dial">
+          <svg class="ring" id="dialRing" viewBox="-120 -120 240 240" aria-hidden="true"></svg>
+          <div class="knob" id="knob" role="slider" tabindex="0" aria-label="Dial" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cube -->
+    <section class="tray" aria-labelledby="cubeTitle">
+      <div class="tray-head">
+        <h2 id="cubeTitle">Cube<small>Drag to turn. Tap to roll.</small></h2>
+        <div class="readout"><b id="cubeFace">1</b> facing<br><span id="rollCount">0</span> rolls</div>
+      </div>
+      <div class="stage cube-stage" id="cubeStage">
+        <div class="cube-shadow"></div>
+        <div class="cube-tilt">
+          <div class="cube" id="cube">
+            <div class="face f1" data-n="1"></div>
+            <div class="face f2" data-n="2"></div>
+            <div class="face f3" data-n="3"></div>
+            <div class="face f4" data-n="4"></div>
+            <div class="face f5" data-n="5"></div>
+            <div class="face f6" data-n="6"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slider -->
+    <section class="tray" aria-labelledby="sliderTitle">
+      <div class="tray-head">
+        <h2 id="sliderTitle">Marimba Slider<small>Every notch is a note.</small></h2>
+        <div class="readout"><b id="noteName">C4</b></div>
+      </div>
+      <div class="stage slider-stage">
+        <div class="track" id="track" role="slider" tabindex="0" aria-label="Note slider" aria-valuemin="0" aria-valuemax="14" aria-valuenow="0">
+          <div class="rail"></div>
+          <div class="fill" id="fill"></div>
+          <div class="notches" id="notches"></div>
+          <div class="thumb" id="thumb"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Switches -->
+    <section class="tray" aria-labelledby="swTitle">
+      <div class="tray-head">
+        <h2 id="swTitle">Switch Bank<small>Flip all four.</small></h2>
+        <div class="readout"><b id="swOn">0</b> / 4 on</div>
+      </div>
+      <div class="stage switch-stage">
+        <div class="switches" id="switches">
+          <button class="sw" role="switch" aria-checked="false" aria-label="Switch 1" style="--c: var(--mint)"><span class="nub"></span></button>
+          <button class="sw" role="switch" aria-checked="false" aria-label="Switch 2" style="--c: var(--sun)"><span class="nub"></span></button>
+          <button class="sw" role="switch" aria-checked="false" aria-label="Switch 3" style="--c: var(--rose)"><span class="nub"></span></button>
+          <button class="sw" role="switch" aria-checked="false" aria-label="Switch 4" style="--c: var(--sky)"><span class="nub"></span></button>
+        </div>
+        <div class="leds" id="leds">
+          <span class="led" style="--c: var(--mint)"></span>
+          <span class="led" style="--c: var(--sun)"></span>
+          <span class="led" style="--c: var(--rose)"></span>
+          <span class="led" style="--c: var(--sky)"></span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="notes">
+    <p><b>iPhone:</b> haptics need iOS 18 or later with System Haptics on (Settings › Sounds &amp; Haptics). Safari only exposes a single light tap, so every buzz here is one or more of those.</p>
+    <p><b>Android:</b> uses the vibration motor, so you get stronger and longer buzzes.</p>
+    <p><b>Install:</b> in Safari tap Share › Add to Home Screen to run it full screen.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const rand = (a, b) => a + Math.random() * (b - a);
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const wrapDeg = d => { while (d > 180) d -= 360; while (d < -180) d += 360; return d; };
+const angleAt = (el, x, y) => {
+  const r = el.getBoundingClientRect();
+  return Math.atan2(y - (r.top + r.height / 2), x - (r.left + r.width / 2)) * 180 / Math.PI;
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('fidget:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('fidget:' + k, JSON.stringify(v)); } catch {} }
+};
+
+const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
+if (!inFrame) document.documentElement.classList.add('standalone');
+
+/* =====================================================================
+   Haptics
+   Android/Chrome: Vibration API.
+   iOS Safari 18+: toggling an <input type="checkbox" switch> fires the
+   system haptic. We keep one hidden switch and click its label.
+   ===================================================================== */
+const Haptics = (() => {
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const canVibrate = !isIOS && typeof navigator.vibrate === 'function';
+  let enabled = store.get('haptics', true);
+  let label = null;
+  let lastTick = 0;
+
+  function iosTap() {
+    if (!label) {
+      label = document.createElement('label');
+      label.className = 'hx';
+      label.setAttribute('aria-hidden', 'true');
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.setAttribute('switch', '');
+      input.tabIndex = -1;
+      label.appendChild(input);
+      document.body.appendChild(label);
+    }
+    label.click();
+  }
+  function buzz(ms) {
+    if (!enabled) return;
+    if (canVibrate) { try { navigator.vibrate(ms); } catch {} }
+    else if (isIOS) iosTap();
+  }
+  function seq(offsets, ms) {
+    offsets.forEach(t => t ? setTimeout(() => buzz(ms), t) : buzz(ms));
+  }
+  return {
+    mode: canVibrate ? 'vibrate' : isIOS ? 'ios' : 'none',
+    get enabled() { return enabled; },
+    set enabled(v) { enabled = v; store.set('haptics', v); },
+    tick() {
+      const n = performance.now();
+      if (n - lastTick < 30) return;
+      lastTick = n;
+      buzz(5);
+    },
+    light() { buzz(10); },
+    medium() { buzz(20); },
+    heavy() { canVibrate ? buzz(40) : seq([0, 40], 0); },
+    success() { canVibrate ? (enabled && navigator.vibrate([15, 60, 15, 60, 30])) : seq([0, 90, 180], 0); },
+    error() { canVibrate ? (enabled && navigator.vibrate([80, 50, 80, 50, 160])) : seq([0, 60, 120, 240, 300], 0); }
+  };
+})();
+
+/* =====================================================================
+   Sound: everything is synthesized with Web Audio, no files.
+   ===================================================================== */
+const Sound = (() => {
+  let ctx = null, master = null, noiseBuf = null, whirNodes = null;
+  let enabled = store.get('sound', true);
+  let lastTick = 0;
+
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+    ctx = new AC({ latencyHint: 'interactive' });
+    master = ctx.createGain();
+    master.gain.value = 0.9;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -10;
+    comp.ratio.value = 6;
+    master.connect(comp).connect(ctx.destination);
+    const len = ctx.sampleRate;
+    noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    // iOS unlock: play one silent sample inside the gesture.
+    const s = ctx.createBufferSource();
+    s.buffer = ctx.createBuffer(1, 1, 22050);
+    s.connect(ctx.destination);
+    s.start(0);
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }
+  const ok = () => enabled && ctx && ctx.state === 'running';
+
+  function env(g, t, peak, attack, dur) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  function noise(t, dur, { type = 'bandpass', freq = 3000, q = 1, gain = 0.5, attack = 0.001 } = {}) {
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain();
+    env(g, t, gain, attack, dur);
+    src.connect(f).connect(g).connect(master);
+    src.start(t, Math.random() * 0.8);
+    src.stop(t + dur + 0.05);
+  }
+  function tone(t, f0, f1, dur, { type = 'sine', gain = 0.4, attack = 0.002 } = {}) {
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ctx.createGain();
+    env(g, t, gain, attack, dur);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  }
+
+  return {
+    init,
+    get enabled() { return enabled; },
+    set enabled(v) { enabled = v; store.set('sound', v); if (!v) this.whir(0); },
+
+    key(type, phase) {
+      if (!ok()) return;
+      const t = ctx.currentTime, p = rand(0.96, 1.04);
+      if (type === 'clicky') {
+        if (phase === 'down') {
+          noise(t, 0.02, { freq: 5200 * p, q: 3, gain: 0.9 });
+          tone(t, 2400 * p, 1400 * p, 0.015, { type: 'square', gain: 0.07 });
+          noise(t + 0.012, 0.035, { freq: 1800 * p, q: 1.5, gain: 0.35 });
+        } else {
+          noise(t, 0.018, { freq: 4300 * p, q: 3, gain: 0.55 });
+        }
+      } else if (type === 'tactile') {
+        if (phase === 'down') {
+          tone(t, 420 * p, 220 * p, 0.05, { gain: 0.45 });
+          noise(t, 0.03, { freq: 2000 * p, q: 1.2, gain: 0.45 });
+        } else {
+          tone(t, 520 * p, 300 * p, 0.03, { gain: 0.2 });
+          noise(t, 0.025, { freq: 1600 * p, q: 1.2, gain: 0.25 });
+        }
+      } else {
+        if (phase === 'down') {
+          tone(t, 190 * p, 85 * p, 0.11, { gain: 0.85 });
+          noise(t, 0.05, { type: 'lowpass', freq: 900 * p, q: 0.7, gain: 0.6 });
+        } else {
+          tone(t, 260 * p, 150 * p, 0.05, { gain: 0.35 });
+          noise(t, 0.02, { type: 'lowpass', freq: 1400, q: 0.7, gain: 0.25 });
+        }
+      }
+    },
+    tick(pitch = 1) {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      if (t - lastTick < 0.018) return;
+      lastTick = t;
+      noise(t, 0.014, { type: 'highpass', freq: 4200 * pitch, q: 0.7, gain: 0.5 });
+      tone(t, 2200 * pitch, 1800 * pitch, 0.012, { type: 'triangle', gain: 0.12 });
+    },
+    pop(pitch = 1) {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      noise(t, 0.035, { freq: 1600 * pitch, q: 0.9, gain: 0.8 });
+      tone(t, 950 * pitch, 160 * pitch, 0.08, { gain: 0.45 });
+      noise(t + 0.004, 0.06, { type: 'lowpass', freq: 600 * pitch, q: 0.5, gain: 0.35 });
+    },
+    thunk(pitch = 1) {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      tone(t, 170 * pitch, 60 * pitch, 0.14, { gain: 0.8 });
+      noise(t, 0.04, { type: 'lowpass', freq: 1000 * pitch, q: 0.7, gain: 0.5 });
+    },
+    toggle(on) {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      noise(t, 0.02, { freq: on ? 3600 : 2600, q: 2, gain: 0.7 });
+      tone(t, on ? 320 : 220, on ? 160 : 100, 0.08, { gain: 0.5 });
+    },
+    pluck(freq) {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      tone(t, freq, freq, 0.45, { type: 'sine', gain: 0.42, attack: 0.003 });
+      tone(t, freq * 4, freq * 4, 0.08, { type: 'sine', gain: 0.08 });
+      noise(t, 0.012, { freq: freq * 3, q: 2, gain: 0.25 });
+    },
+    whoosh() {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      noise(t, 0.4, { type: 'bandpass', freq: 700, q: 0.8, gain: 0.35, attack: 0.15 });
+    },
+    chime(notes, gap = 0.07, dur = 0.3) {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      notes.forEach((n, i) => {
+        tone(t + i * gap, n, n, dur, { type: 'triangle', gain: 0.28 });
+        tone(t + i * gap, n * 2, n * 2, dur * 0.5, { type: 'sine', gain: 0.06 });
+      });
+    },
+    glide(f0, f1, dur = 0.18) {
+      if (!ok()) return;
+      tone(ctx.currentTime, f0, f1, dur, { type: 'triangle', gain: 0.3 });
+    },
+    buzz() {
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      tone(t, 150, 80, 0.5, { type: 'sawtooth', gain: 0.22 });
+      tone(t, 155, 82, 0.5, { type: 'square', gain: 0.08 });
+    },
+    whir(speed) {
+      if (!ctx) return;
+      if (!whirNodes) {
+        if (!speed || !ok()) return;
+        const src = ctx.createBufferSource();
+        src.buffer = noiseBuf; src.loop = true;
+        const f = ctx.createBiquadFilter();
+        f.type = 'bandpass'; f.Q.value = 1.6; f.frequency.value = 300;
+        const o = ctx.createOscillator();
+        o.type = 'triangle'; o.frequency.value = 50;
+        const og = ctx.createGain(); og.gain.value = 0.35;
+        const g = ctx.createGain(); g.gain.value = 0;
+        src.connect(f).connect(g);
+        o.connect(og).connect(g);
+        g.connect(master);
+        src.start(); o.start();
+        whirNodes = { f, o, g };
+      }
+      const t = ctx.currentTime;
+      const s = enabled ? speed : 0;
+      whirNodes.g.gain.setTargetAtTime(Math.min(0.2, s * 0.045), t, 0.06);
+      whirNodes.f.frequency.setTargetAtTime(180 + s * 380, t, 0.06);
+      whirNodes.o.frequency.setTargetAtTime(30 + s * 22, t, 0.06);
+    }
+  };
+})();
+
+// Unlock audio on the first gestures (iOS only allows it on touchend/click).
+['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(ev =>
+  document.addEventListener(ev, Sound.init, { capture: true, passive: true }));
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+/* ---------- Settings ---------- */
+(() => {
+  const s = $('#soundToggle'), h = $('#hapticToggle'), m = $('#hmode');
+  s.setAttribute('aria-pressed', Sound.enabled);
+  h.setAttribute('aria-pressed', Haptics.enabled);
+  m.textContent = { vibrate: 'vibration motor', ios: 'iOS taptic', none: 'no haptics here' }[Haptics.mode];
+  s.addEventListener('click', () => {
+    Sound.enabled = !Sound.enabled;
+    s.setAttribute('aria-pressed', Sound.enabled);
+    Sound.toggle(true);
+  });
+  h.addEventListener('click', () => {
+    Haptics.enabled = !Haptics.enabled;
+    h.setAttribute('aria-pressed', Haptics.enabled);
+    Haptics.medium();
+    Sound.toggle(Haptics.enabled);
+  });
+})();
+
+/* ---------- Clicker ---------- */
+(() => {
+  const btn = $('#clicker'), out = $('#clickCount');
+  let count = store.get('clicks', 0);
+  let type = store.get('keyType', 'clicky');
+  let pressed = false;
+  out.textContent = count.toLocaleString();
+  const colors = { clicky: 'var(--sky)', tactile: 'var(--tangerine)', thocky: 'var(--lilac)' };
+
+  function setType(t) {
+    type = t;
+    store.set('keyType', t);
+    $$('#keyTypes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.type === t));
+    btn.style.setProperty('--c', colors[t]);
+  }
+  setType(type);
+  $$('#keyTypes button').forEach(b => b.addEventListener('click', () => {
+    setType(b.dataset.type);
+    Sound.key(type, 'down');
+    Haptics.light();
+  }));
+
+  function down() {
+    if (pressed) return;
+    pressed = true;
+    btn.classList.add('down');
+    Sound.key(type, 'down');
+    type === 'clicky' ? Haptics.heavy() : Haptics.medium();
+  }
+  function up() {
+    if (!pressed) return;
+    pressed = false;
+    btn.classList.remove('down');
+    Sound.key(type, 'up');
+    Haptics.light();
+    count++;
+    out.textContent = count.toLocaleString();
+    store.set('clicks', count);
+  }
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); btn.setPointerCapture(e.pointerId); down(); });
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
+  btn.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
+  btn.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
+  btn.addEventListener('click', e => e.preventDefault());
+})();
+
+/* ---------- Spinner ---------- */
+(() => {
+  const stage = $('#spinStage'), rotor = $('#rotor'), rpmEl = $('#rpm'), bestEl = $('#bestRpm'), hint = $('#spinHint');
+  let angle = 0, vel = 0, dragging = false, prevA = 0, prevT = 0;
+  let raf = 0, lastFrame = 0, sector = 0, best = store.get('bestRpm', 0);
+  const FRICTION = 0.00042; // per ms
+  bestEl.textContent = best;
+
+  function frame(t) {
+    const dt = lastFrame ? Math.min(40, t - lastFrame) : 16;
+    lastFrame = t;
+    if (!dragging) {
+      angle += vel * dt;
+      vel *= Math.exp(-FRICTION * dt * (1 + 2 / (1 + Math.abs(vel) * 4)));
+      if (Math.abs(vel) < 0.003) vel = 0;
+    }
+    rotor.style.transform = `rotate(${angle}deg)`;
+    const s = Math.floor(angle / 120);
+    if (s !== sector) {
+      sector = s;
+      Haptics.tick();
+      Sound.tick(1 + Math.min(Math.abs(vel) * 0.15, 0.5));
+    }
+    const rpm = Math.round(Math.abs(vel) * 1000 / 360 * 60);
+    rpmEl.textContent = rpm;
+    if (rpm > best && !dragging) { best = rpm; bestEl.textContent = best; store.set('bestRpm', best); }
+    Sound.whir(dragging ? 0 : Math.abs(vel));
+    if (dragging || vel !== 0) raf = requestAnimationFrame(frame);
+    else { raf = 0; lastFrame = 0; Sound.whir(0); }
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+  stage.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    stage.setPointerCapture(e.pointerId);
+    dragging = true;
+    prevA = angleAt(stage, e.clientX, e.clientY);
+    prevT = e.timeStamp;
+    if (Math.abs(vel) > 0.25) { Haptics.medium(); Sound.thunk(1.8); }
+    vel = 0;
+    hint.style.opacity = 0;
+    kick();
+  });
+  stage.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const a = angleAt(stage, e.clientX, e.clientY);
+    const d = wrapDeg(a - prevA);
+    const dt = Math.max(1, e.timeStamp - prevT);
+    angle += d;
+    vel = vel * 0.4 + (d / dt) * 0.6;
+    prevA = a;
+    prevT = e.timeStamp;
+  });
+  const end = e => {
+    if (!dragging) return;
+    dragging = false;
+    if (e.timeStamp - prevT > 90) vel = 0;
+    vel = clamp(vel, -9, 9);
+    kick();
+  };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+})();
+
+/* ---------- Bubble wrap ---------- */
+(() => {
+  const grid = $('#bubbles'), popEl = $('#popCount'), sheetEl = $('#sheetCount');
+  const N = 24;
+  let popped = store.get('pops', 0), sheets = store.get('sheets', 0), left = N, down = false;
+  popEl.textContent = popped.toLocaleString();
+  sheetEl.textContent = sheets;
+  for (let i = 0; i < N; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    grid.appendChild(b);
+  }
+  function pop(el) {
+    el.classList.remove('fresh');
+    el.classList.add('popped');
+    Sound.pop(rand(0.8, 1.3));
+    Haptics.medium();
+    popped++; left--;
+    popEl.textContent = popped.toLocaleString();
+    store.set('pops', popped);
+    if (left === 0) setTimeout(refill, 650);
+  }
+  function refill() {
+    sheets++;
+    sheetEl.textContent = sheets;
+    store.set('sheets', sheets);
+    Sound.whoosh();
+    Haptics.success();
+    $$('.bubble', grid).forEach((b, i) => {
+      b.classList.remove('popped');
+      b.classList.remove('fresh');
+      b.style.animationDelay = (i % 6) * 30 + Math.floor(i / 6) * 40 + 'ms';
+      void b.offsetWidth;
+      b.classList.add('fresh');
+    });
+    left = N;
+  }
+  function at(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (el && el.classList.contains('bubble') && !el.classList.contains('popped') && grid.contains(el)) pop(el);
+  }
+  grid.addEventListener('pointerdown', e => { e.preventDefault(); down = true; at(e.clientX, e.clientY); });
+  grid.addEventListener('pointermove', e => { if (down) at(e.clientX, e.clientY); });
+  window.addEventListener('pointerup', () => { down = false; });
+  window.addEventListener('pointercancel', () => { down = false; });
+})();
+
+/* ---------- Detent dial ---------- */
+(() => {
+  const stage = $('#dialStage'), knob = $('#knob'), ring = $('#dialRing'), out = $('#dialVal');
+  const MIN = -135, MAX = 135, STEPS = 30, STEP = (MAX - MIN) / STEPS;
+  let raw = MIN, step = 0, dragging = false, prevA = 0, atEdge = true;
+  const marks = [];
+  for (let i = 0; i <= STEPS; i++) {
+    const th = (MIN + i * STEP) * Math.PI / 180;
+    const major = i % 5 === 0;
+    const r1 = major ? 100 : 104, r2 = 114;
+    const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('x1', (Math.sin(th) * r1).toFixed(2));
+    l.setAttribute('y1', (-Math.cos(th) * r1).toFixed(2));
+    l.setAttribute('x2', (Math.sin(th) * r2).toFixed(2));
+    l.setAttribute('y2', (-Math.cos(th) * r2).toFixed(2));
+    l.setAttribute('class', 'tickmark' + (major ? ' major' : ''));
+    ring.appendChild(l);
+    marks.push(l);
+  }
+  function render() {
+    knob.style.transform = `rotate(${MIN + step * STEP}deg)`;
+    out.textContent = step;
+    knob.setAttribute('aria-valuenow', step);
+    marks.forEach((m, i) => m.classList.toggle('lit', i <= step && step > 0));
+  }
+  function setRaw(v) {
+    raw = clamp(v, MIN, MAX);
+    const edge = raw === MIN || raw === MAX;
+    const s = Math.round((raw - MIN) / STEP);
+    if (s !== step) {
+      step = s;
+      Haptics.tick();
+      Sound.tick(0.6 + step / STEPS * 0.9);
+      render();
+    }
+    if (edge && !atEdge) { Haptics.heavy(); Sound.thunk(raw === MAX ? 1.3 : 0.9); }
+    atEdge = edge;
+  }
+  render();
+  stage.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    stage.setPointerCapture(e.pointerId);
+    dragging = true;
+    prevA = angleAt(stage, e.clientX, e.clientY);
+  });
+  stage.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const a = angleAt(stage, e.clientX, e.clientY);
+    setRaw(raw + wrapDeg(a - prevA));
+    prevA = a;
+  });
+  const end = () => { dragging = false; raw = MIN + step * STEP; };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+  knob.addEventListener('keydown', e => {
+    const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+    if (d) { e.preventDefault(); setRaw(MIN + (step + d) * STEP); }
+  });
+})();
+
+/* ---------- Marimba slider ---------- */
+(() => {
+  const track = $('#track'), thumb = $('#thumb'), fill = $('#fill'), notchWrap = $('#notches'), nameEl = $('#noteName');
+  const SCALE = [0, 2, 4, 7, 9], NAMES = ['C', 'D', 'E', 'G', 'A'];
+  const N = 15;
+  const notes = Array.from({ length: N }, (_, i) => {
+    const oct = Math.floor(i / 5), deg = i % 5;
+    return { f: 261.63 * Math.pow(2, (oct * 12 + SCALE[deg]) / 12), name: NAMES[deg] + (4 + oct) };
+  });
+  const notchEls = notes.map((_, i) => {
+    const n = document.createElement('span');
+    n.className = 'notch';
+    n.style.left = `calc(22px + (100% - 44px) * ${i / (N - 1)})`;
+    notchWrap.appendChild(n);
+    return n;
+  });
+  let idx = 0, dragging = false;
+  function render() {
+    const p = idx / (N - 1);
+    thumb.style.left = `calc(22px + (100% - 44px) * ${p})`;
+    fill.style.width = `calc(22px + (100% - 44px) * ${p})`;
+    notchEls.forEach((n, i) => n.classList.toggle('lit', i <= idx));
+    nameEl.textContent = notes[idx].name;
+    track.setAttribute('aria-valuenow', idx);
+  }
+  function setIdx(i, sound = true) {
+    i = clamp(i, 0, N - 1);
+    if (i === idx) return;
+    // Play every note we pass so fast swipes sound like a glissando.
+    const dir = Math.sign(i - idx);
+    while (idx !== i) {
+      idx += dir;
+      if (sound) Sound.pluck(notes[idx].f);
+    }
+    Haptics.tick();
+    render();
+  }
+  function fromX(x) {
+    const r = track.getBoundingClientRect();
+    const p = clamp((x - r.left - 22) / (r.width - 44), 0, 1);
+    return Math.round(p * (N - 1));
+  }
+  render();
+  track.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    track.setPointerCapture(e.pointerId);
+    dragging = true;
+    track.classList.add('active');
+    const i = fromX(e.clientX);
+    if (i === idx) { Sound.pluck(notes[idx].f); Haptics.tick(); } else setIdx(i);
+  });
+  track.addEventListener('pointermove', e => { if (dragging) setIdx(fromX(e.clientX)); });
+  const end = () => { dragging = false; track.classList.remove('active'); };
+  track.addEventListener('pointerup', end);
+  track.addEventListener('pointercancel', end);
+  track.addEventListener('keydown', e => {
+    const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+    if (d) { e.preventDefault(); setIdx(idx + d); }
+  });
+})();
+
+/* ---------- Switch bank ---------- */
+(() => {
+  const sws = $$('#switches .sw'), leds = $$('#leds .led'), ledWrap = $('#leds'), out = $('#swOn');
+  sws.forEach((sw, i) => sw.addEventListener('click', () => {
+    const on = sw.getAttribute('aria-checked') !== 'true';
+    sw.setAttribute('aria-checked', on);
+    leds[i].classList.toggle('on', on);
+    Sound.toggle(on);
+    Haptics.medium();
+    const count = sws.filter(s => s.getAttribute('aria-checked') === 'true').length;
+    out.textContent = count;
+    if (count === sws.length) {
+      setTimeout(() => {
+        Sound.chime([523.25, 659.25, 783.99, 1046.5]);
+        Haptics.success();
+        ledWrap.classList.remove('party');
+        void ledWrap.offsetWidth;
+        ledWrap.classList.add('party');
+      }, 140);
+    }
+  }));
+})();
+
+/* ---------- Cube ---------- */
+(() => {
+  const stage = $('#cubeStage'), cube = $('#cube'), faceEl = $('#cubeFace'), rollEl = $('#rollCount');
+  const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+  $$('.face', cube).forEach(f => {
+    const on = PIPS[f.dataset.n];
+    for (let i = 0; i < 9; i++) {
+      const p = document.createElement('i');
+      if (on.includes(i)) p.className = 'on';
+      f.appendChild(p);
+    }
+  });
+  const NORMALS = [[1, 0, 0, 1], [2, 0, -1, 0], [3, 1, 0, 0], [4, -1, 0, 0], [5, 0, 1, 0], [6, 0, 0, -1]];
+  let rx = 0, ry = 0, vx = 0, vy = 0, tx = 0, ty = 0;
+  let mode = 'idle', raf = 0, lastFrame = 0;
+  let sx = 0, sy = 0, prevX = 0, prevY = 0, prevT = 0, moved = false;
+  let cellX = 0, cellY = 0, rolls = store.get('rolls', 0);
+  rollEl.textContent = rolls;
+  const W = 0.013, ZETA = 0.5;
+
+  function render() {
+    cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    const cx = Math.round(rx / 90), cy = Math.round(ry / 90);
+    if (cx !== cellX || cy !== cellY) {
+      cellX = cx; cellY = cy;
+      Haptics.tick();
+      Sound.tick(0.75);
+    }
+  }
+  function facing() {
+    try {
+      const m = new DOMMatrix(`rotateX(${rx}deg) rotateY(${ry}deg)`);
+      let best = 1, bz = -2;
+      NORMALS.forEach(([n, x, y, z]) => {
+        const p = m.transformPoint(new DOMPoint(x, y, z, 0));
+        if (p.z > bz) { bz = p.z; best = n; }
+      });
+      return best;
+    } catch { return '?'; }
+  }
+  function frame(t) {
+    const dt = lastFrame ? Math.min(32, t - lastFrame) : 16;
+    lastFrame = t;
+    if (mode === 'settle') {
+      vx += (W * W * (tx - rx) - 2 * ZETA * W * vx) * dt;
+      vy += (W * W * (ty - ry) - 2 * ZETA * W * vy) * dt;
+      rx += vx * dt; ry += vy * dt;
+      if (Math.abs(tx - rx) < 0.4 && Math.abs(ty - ry) < 0.4 && Math.abs(vx) + Math.abs(vy) < 0.02) {
+        rx = tx; ry = ty; vx = vy = 0; mode = 'idle';
+        render();
+        Sound.thunk(1.1);
+        Haptics.medium();
+        faceEl.textContent = facing();
+      }
+    }
+    render();
+    if (mode !== 'idle') raf = requestAnimationFrame(frame);
+    else { raf = 0; lastFrame = 0; }
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+  function roll() {
+    rolls++;
+    rollEl.textContent = rolls;
+    store.set('rolls', rolls);
+    tx = Math.round(rx / 90) * 90 + 90 * randInt(2, 5) * (Math.random() < 0.5 ? -1 : 1);
+    ty = Math.round(ry / 90) * 90 + 90 * randInt(2, 6) * (Math.random() < 0.5 ? -1 : 1);
+    vx = (tx - rx) * 0.004; vy = (ty - ry) * 0.004;
+    mode = 'settle';
+    Sound.whoosh();
+    Haptics.light();
+    kick();
+  }
+
+  stage.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    stage.setPointerCapture(e.pointerId);
+    mode = 'drag';
+    sx = prevX = e.clientX; sy = prevY = e.clientY; prevT = e.timeStamp;
+    moved = false; vx = vy = 0;
+    kick();
+  });
+  stage.addEventListener('pointermove', e => {
+    if (mode !== 'drag') return;
+    const dx = e.clientX - prevX, dy = e.clientY - prevY;
+    const dt = Math.max(1, e.timeStamp - prevT);
+    if (Math.hypot(e.clientX - sx, e.clientY - sy) > 8) moved = true;
+    ry += dx * 0.7; rx -= dy * 0.7;
+    vy = vy * 0.4 + (dx * 0.7 / dt) * 0.6;
+    vx = vx * 0.4 + (-dy * 0.7 / dt) * 0.6;
+    prevX = e.clientX; prevY = e.clientY; prevT = e.timeStamp;
+  });
+  const end = e => {
+    if (mode !== 'drag') return;
+    if (!moved) { roll(); return; }
+    if (e.timeStamp - prevT > 90) { vx = vy = 0; }
+    tx = Math.round((rx + vx * 160) / 90) * 90;
+    ty = Math.round((ry + vy * 160) / 90) * 90;
+    mode = 'settle';
+    kick();
+  };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+})();
+
+/* ---------- Reflex game ---------- */
+(() => {
+  const pad = $('#pad'), glyph = $('#cmdGlyph'), word = $('#cmdWord'), sub = $('#cmdSub');
+  const bar = $('#timebar'), scoreEl = $('#score'), bestEl = $('#best'), startBtn = $('#startBtn');
+  const voiceBtn = $('#voiceToggle');
+  const CMDS = {
+    tap:    { word: 'Tap it',     glyph: '●', c: 'var(--sun)',       say: 'Tap it',    cue: () => Sound.chime([784], 0, 0.15) },
+    double: { word: 'Double tap', glyph: '●●', c: 'var(--mint)',     say: 'Double tap', cue: () => Sound.chime([784, 784], 0.1, 0.12) },
+    hold:   { word: 'Hold it',    glyph: '■', c: 'var(--lilac)',     say: 'Hold it',   cue: () => Sound.chime([392], 0, 0.5) },
+    up:     { word: 'Swipe up',   glyph: '↑', c: 'var(--sky)',       say: 'Swipe up',  cue: () => Sound.glide(500, 1000) },
+    down:   { word: 'Swipe down', glyph: '↓', c: 'var(--sky)',       say: 'Swipe down', cue: () => Sound.glide(1000, 500) },
+    left:   { word: 'Swipe left', glyph: '←', c: 'var(--tangerine)', say: 'Swipe left', cue: () => Sound.chime([659, 523], 0.08, 0.12) },
+    right:  { word: 'Swipe right', glyph: '→', c: 'var(--tangerine)', say: 'Swipe right', cue: () => Sound.chime([523, 659], 0.08, 0.12) },
+    spin:   { word: 'Spin it',    glyph: '↻', c: 'var(--rose)',      say: 'Spin it',   cue: () => Sound.chime([523, 659, 784, 659], 0.05, 0.1) }
+  };
+  const IDS = Object.keys(CMDS);
+  const HOLD_MS = 500;
+  let state = 'idle'; // idle | play | gap | over
+  let cmd = null, deadline = 0, limit = 0, score = 0, best = store.get('reflexBest', 0), raf = 0;
+  let g = null, holdTimer = 0, pendingTap = false, pendingTimer = 0;
+  let voice = store.get('voice', true);
+  bestEl.textContent = best;
+  voiceBtn.setAttribute('aria-pressed', voice);
+  voiceBtn.addEventListener('click', () => {
+    voice = !voice;
+    store.set('voice', voice);
+    voiceBtn.setAttribute('aria-pressed', voice);
+    Haptics.light();
+  });
+
+  function speak(text) {
+    if (!voice || !('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.35; u.pitch = 1.15; u.volume = 1;
+      speechSynthesis.speak(u);
+    } catch {}
+  }
+  function show(c) {
+    pad.style.setProperty('--c', c.c);
+    glyph.textContent = c.glyph;
+    word.textContent = c.word;
+  }
+  function clearTimers() {
+    clearTimeout(holdTimer);
+    clearTimeout(pendingTimer);
+    pendingTap = false;
+    g = null;
+  }
+  function next() {
+    clearTimers();
+    let id;
+    do { id = IDS[randInt(0, IDS.length - 1)]; } while (cmd && id === cmd && Math.random() < 0.7);
+    cmd = id;
+    const c = CMDS[id];
+    limit = Math.max(850, 2600 * Math.pow(0.95, score)) + (id === 'spin' ? 900 : 0) + (id === 'hold' ? HOLD_MS : 0) + (id === 'double' ? 250 : 0);
+    deadline = performance.now() + limit;
+    show(c);
+    sub.textContent = '';
+    c.cue();
+    speak(c.say);
+    Haptics.light();
+    state = 'play';
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    raf = 0;
+    if (state !== 'play') return;
+    const left = (deadline - performance.now()) / limit;
+    bar.style.transform = `scaleX(${clamp(left, 0, 1)})`;
+    if (left <= 0) { fail('Too slow'); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function success() {
+    state = 'gap';
+    clearTimers();
+    score++;
+    scoreEl.textContent = score;
+    const base = 523.25 * Math.pow(2, (Math.min(score, 24) % 12) / 12);
+    Sound.chime([base, base * 1.5], 0.06, 0.2);
+    Haptics.medium();
+    pad.classList.remove('flash'); void pad.offsetWidth; pad.classList.add('flash');
+    setTimeout(next, 280);
+  }
+  function fail(reason) {
+    state = 'over';
+    clearTimers();
+    bar.style.transform = 'scaleX(0)';
+    Sound.buzz();
+    Haptics.error();
+    pad.classList.remove('fail'); void pad.offsetWidth; pad.classList.add('fail');
+    const newBest = score > best;
+    if (newBest) { best = score; bestEl.textContent = best; store.set('reflexBest', best); }
+    pad.style.setProperty('--c', 'var(--rose)');
+    glyph.textContent = '✕';
+    word.textContent = newBest ? 'New best!' : 'Game over';
+    sub.textContent = `${reason}. You scored ${score}. Press Start to go again.`;
+    if (voice) speak(newBest ? 'New best!' : 'Game over');
+    startBtn.textContent = 'Play again';
+  }
+  function judge(kind) {
+    if (state !== 'play') return;
+    if (kind === cmd) success();
+    else fail(`That was ${CMDS[kind].word.toLowerCase()}`);
+  }
+  function start() {
+    score = 0;
+    scoreEl.textContent = 0;
+    cmd = null;
+    state = 'gap';
+    pad.style.setProperty('--c', 'var(--sun)');
+    glyph.textContent = '3';
+    word.textContent = 'Get ready';
+    sub.textContent = '';
+    bar.style.transform = 'scaleX(1)';
+    startBtn.textContent = 'Restart';
+    Haptics.light();
+    let n = 3;
+    Sound.chime([440], 0, 0.12);
+    const step = () => {
+      n--;
+      if (state !== 'gap' || cmd) return;
+      if (n > 0) { glyph.textContent = n; Sound.chime([440], 0, 0.12); Haptics.light(); setTimeout(step, 450); }
+      else next();
+    };
+    setTimeout(step, 450);
+  }
+  startBtn.addEventListener('click', start);
+
+  pad.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state !== 'play') return;
+    pad.setPointerCapture(e.pointerId);
+    const a = angleAt(pad, e.clientX, e.clientY);
+    g = { x: e.clientX, y: e.clientY, t: e.timeStamp, acc: 0, prevA: a, dist: 0, done: false };
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      if (g && !g.done && g.dist < 24) { g.done = true; judge('hold'); }
+    }, HOLD_MS);
+  });
+  pad.addEventListener('pointermove', e => {
+    if (!g || g.done) return;
+    g.dist = Math.max(g.dist, Math.hypot(e.clientX - g.x, e.clientY - g.y));
+    const a = angleAt(pad, e.clientX, e.clientY);
+    g.acc += wrapDeg(a - g.prevA);
+    g.prevA = a;
+    if (Math.abs(g.acc) >= 300) { g.done = true; clearTimeout(holdTimer); Haptics.tick(); judge('spin'); }
+  });
+  const up = e => {
+    clearTimeout(holdTimer);
+    if (!g) return;
+    const gg = g; g = null;
+    if (gg.done || state !== 'play') return;
+    const dx = e.clientX - gg.x, dy = e.clientY - gg.y;
+    if (Math.hypot(dx, dy) >= 40) {
+      judge(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+      return;
+    }
+    if (gg.dist >= 40) return; // wandered and came back: ignore
+    // Tap or double tap
+    if (cmd === 'double') {
+      if (pendingTap) { clearTimeout(pendingTimer); pendingTap = false; judge('double'); }
+      else {
+        pendingTap = true;
+        Haptics.tick();
+        Sound.tick(1.2);
+        pendingTimer = setTimeout(() => { pendingTap = false; judge('tap'); }, 330);
+      }
+    } else {
+      judge('tap');
+    }
+  };
+  pad.addEventListener('pointerup', up);
+  pad.addEventListener('pointercancel', () => { clearTimeout(holdTimer); g = null; });
+})();
+
+/* ---------- Offline support when installed as a web app ---------- */
+if (!inFrame && 'serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+})();
+</script>
+</body>
+</html>
