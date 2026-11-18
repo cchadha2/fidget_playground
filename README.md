@@ -14,3 +14,13 @@ Sounds are synthesized live with Web Audio.
 - Locally: `python3 -m http.server` then open `http://<your-ip>:8000` on your phone.
 - Hosted: enable GitHub Pages (Settings › Pages › Deploy from branch › `main` / root).
 - Install: Safari › Share › Add to Home Screen (works offline via `sw.js`).
+
+## Native iPhone app (real haptics)
+Safari can only fire a faint single tick, so there's a native SwiftUI version in `ios/` using Core Haptics (crisp clicks, continuous rumble on the spinner), a low-latency synth audio engine and 120Hz touch handling.
+
+1. Open `ios/FidgetPlayground.xcodeproj` in Xcode 16+.
+2. Target › Signing & Capabilities: pick your Team (a free Apple ID works). Change the bundle ID if Xcode says it's taken.
+3. Plug in your iPhone, select it as the run destination, press Run.
+4. First time: on the phone, Settings › General › VPN & Device Management › trust your developer certificate. Also enable Developer Mode if prompted.
+
+With a free Apple ID the install expires after 7 days; just hit Run again.
