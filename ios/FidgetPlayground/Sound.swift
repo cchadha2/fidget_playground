@@ -73,6 +73,12 @@ final class Sound {
     private init() {
         format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
 
+        #if targetEnvironment(simulator)
+        // AVAudioEngine.mainMixerNode reliably times out its RPC to the Simulator's
+        // CoreAudio bridge and aborts the process. Skip engine setup here so the app
+        // is still usable for visual testing; sounds just stay silent. Real devices
+        // don't go through this bridge and are unaffected.
+        #else
         let session = AVAudioSession.sharedInstance()
         // Plays with the silent switch on, and mixes with your music instead of stopping it.
         try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -106,10 +112,11 @@ final class Sound {
             try? AVAudioSession.sharedInstance().setActive(true)
             self?.start()
         }
+        #endif
     }
 
     private func start() {
-        guard !engine.isRunning else { return }
+        guard !players.isEmpty, !engine.isRunning else { return }
         do {
             try engine.start()
             players.forEach { $0.play() }
@@ -196,7 +203,7 @@ final class Sound {
     }
 
     private func play(_ buf: AVAudioPCMBuffer) {
-        guard enabled else { return }
+        guard enabled, !players.isEmpty else { return }
         if !engine.isRunning { start() }
         let p = players[nextPlayer]
         nextPlayer = (nextPlayer + 1) % players.count
